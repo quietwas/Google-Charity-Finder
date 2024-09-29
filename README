@@ -1,0 +1,3 @@
+YOU MUST PROVIDE YOUR OWN API KEYS, unfortunately I did not have the time to integrate a backend with the .envs (sorry)
+
+The api keys are needed in the globe component and the ChatbotModal Component
