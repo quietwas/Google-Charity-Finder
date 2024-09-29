@@ -30,7 +30,7 @@ app.post('/api/generative-ai', async (req, res) => {
       },
       {
         headers: {
-          'Authorization': `Bearer ${process.env.GENERATIVE_AI_KEY}`,
+          'Authorization': `Bearer ${process.env.VITE_GOOGLE_GENERATIVE_AI_KEY}`,
         },
       }
     );
