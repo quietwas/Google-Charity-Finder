@@ -16,7 +16,7 @@ app.post('/api/generative-ai', async (req, res) => {
   try {
     // Make a request to the Google Generative AI API
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com`, 
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.VITE_GOOGLE_GENERATIVE_AI_KEY}`, 
       {
         model,
         message,
