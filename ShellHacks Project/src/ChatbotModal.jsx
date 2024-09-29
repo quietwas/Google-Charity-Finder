@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
+import axios from "axios";
 Modal.setAppElement("#root");
 
 function ChatbotModal({ isOpen, onRequestClose, charityName }) {
@@ -15,7 +15,7 @@ function ChatbotModal({ isOpen, onRequestClose, charityName }) {
       if (isOpen && charityName) {
         try {
           const genAI = new GoogleGenerativeAI(
-            import.meta.env.VITE_GOOGLE_GENERATIVE_AI_KEY
+            import.meta.env.VITE_GOOGLE_GENERATIVE_AI_KEY //Gemini API KEY
           );
           const model = genAI.getGenerativeModel({
             model: "gemini-1.5-flash",
@@ -62,6 +62,13 @@ function ChatbotModal({ isOpen, onRequestClose, charityName }) {
     setMessages((prevMessages) => [...prevMessages, newMessage]);
 
     try {
+      const response = await axios.post(
+        "http://localhost:5000/api/generative-ai",
+        {
+          model: "gemini-1.5-flash",
+          message: input,
+        }
+      );
       // Send the user's message to the chatbot
       const result = await chat.sendMessage(input);
       const botMessage = { sender: "bot", text: result.response.text() };
@@ -77,21 +84,25 @@ function ChatbotModal({ isOpen, onRequestClose, charityName }) {
 
   return (
     <Modal isOpen={isOpen} onRequestClose={onRequestClose} className="modal">
-      <h2>{charityName}</h2>
-      <div className="chat-window">
-        {messages.map((msg, index) => (
-          <div key={index} className={`message ${msg.sender}`}>
-            {msg.text}
-          </div>
-        ))}
+      <div className="modal">
+        <h2>Learn about {charityName}</h2>
+        <div className="chat-window">
+          {messages.map((msg, index) => (
+            <div key={index} className={`message ${msg.sender}`}>
+              {msg.text}
+            </div>
+          ))}
+        </div>
+        <div className="input-container">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+          />
+          <button onClick={handleSendMessage}>Send</button>
+        </div>
       </div>
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-      />
-      <button onClick={handleSendMessage}>Send</button>
     </Modal>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import axios from "axios"; // Import axios
 import StarBackground from "./Stars";
 import ChatbotModal from "./ChatbotModal";
 import "./App.css";
@@ -12,6 +13,7 @@ function Globe() {
   const mountRef = useRef(null);
   const mapRef = useRef(null);
 
+  // Initialize 3D globe
   useEffect(() => {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -57,14 +59,16 @@ function Globe() {
     };
   }, [showMap]);
 
+  // Load Google Maps script and initialize map
   useEffect(() => {
     if (!showMap) return;
 
     const loadGoogleMaps = () => {
       if (!document.querySelector("script[src*='maps.googleapis.com']")) {
         const script = document.createElement("script");
-        script.src =
-          "https://maps.googleapis.com/maps/api/js?key=&libraries=places,geometry&callback=initMap";
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${
+          import.meta.env.VITE_GOOGLE_MAP_GEN_KEY
+        }&libraries=places,geometry&callback=initMap`;
         script.async = true;
 
         window.initMap = () => {
@@ -73,59 +77,80 @@ function Globe() {
             zoom: 2,
           });
 
-          const service = new google.maps.places.PlacesService(map);
           let currentMarker = null;
 
-          const findCharities = (location) => {
-            const request = {
-              location: new google.maps.LatLng(location.lat(), location.lng()),
-              radius: "20000",
-              keyword: "charity donation",
-            };
+          const findCharities = async (location) => {
+            try {
+              // Make a request to your Express proxy server
+              const response = await axios.get(
+                "http://localhost:5000/api/maps",
+                {
+                  params: {
+                    location: `${location.lat()},${location.lng()}`, // Lat/lng from Google Maps click event
+                    radius: "20000",
+                    keyword: "charity donation",
+                  },
+                }
+              );
 
-            service.nearbySearch(request, (results, status) => {
-              if (status === google.maps.places.PlacesServiceStatus.OK) {
-                let closestCharity = null;
-                let minDistance = Infinity;
+              const results = response.data.results;
 
-                results.forEach((place) => {
-                  const distance =
-                    google.maps.geometry.spherical.computeDistanceBetween(
-                      location,
-                      place.geometry.location
-                    );
+              let closestCharity = null;
+              let minDistance = Infinity;
 
-                  if (distance < minDistance) {
-                    minDistance = distance;
-                    closestCharity = place;
-                  }
+              results.forEach((place) => {
+                const distance =
+                  google.maps.geometry.spherical.computeDistanceBetween(
+                    location,
+                    new google.maps.LatLng(
+                      place.geometry.location.lat,
+                      place.geometry.location.lng
+                    )
+                  );
+
+                if (distance < minDistance) {
+                  minDistance = distance;
+                  closestCharity = place;
+                }
+              });
+
+              if (closestCharity) {
+                // Center map to closest charity
+                map.setCenter(
+                  new google.maps.LatLng(
+                    closestCharity.geometry.location.lat,
+                    closestCharity.geometry.location.lng
+                  )
+                );
+                map.setZoom(14);
+
+                // Remove previous marker if exists
+                if (currentMarker) {
+                  currentMarker.setMap(null);
+                }
+
+                // Add a new marker for the closest charity
+                currentMarker = new google.maps.Marker({
+                  position: new google.maps.LatLng(
+                    closestCharity.geometry.location.lat,
+                    closestCharity.geometry.location.lng
+                  ),
+                  map: map,
+                  title: closestCharity.name,
                 });
 
-                if (closestCharity) {
-                  map.setCenter(closestCharity.geometry.location);
-                  map.setZoom(14);
-
-                  if (currentMarker) {
-                    currentMarker.setMap(null);
-                  }
-
-                  currentMarker = new google.maps.Marker({
-                    position: closestCharity.geometry.location,
-                    map: map,
-                    title: closestCharity.name,
-                  });
-
-                  // Set the selected charity with all necessary details
-                  setSelectedCharity(closestCharity.name);
-                  setIsModalOpen(true);
-                }
+                // Set the selected charity with all necessary details
+                setSelectedCharity(closestCharity.name);
+                setIsModalOpen(true);
               }
-            });
+            } catch (error) {
+              console.error("Error fetching charities:", error);
+            }
           };
 
           map.addListener("click", (e) => {
             const clickedLocation = e.latLng;
-            findCharities(clickedLocation);
+            findCharities(clickedLocation); // Fetch nearby charities on map click
           });
         };
 
@@ -136,7 +161,7 @@ function Globe() {
     };
 
     loadGoogleMaps();
-  }, [showMap]);
+  }, [showMap]); // Correct placement of useEffect
 
   return (
     <>
