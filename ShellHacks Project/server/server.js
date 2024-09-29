@@ -7,7 +7,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware to enable CORS for all requests
-app.use(cors());
+app.use(cors({
+    origin: 'https://aws-branch.d20g4ou30d6j4s.amplifyapp.com',
+  }));
 app.use(express.json());
 
 // Root route to confirm the server is running
