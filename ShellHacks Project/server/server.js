@@ -1,0 +1,62 @@
+const express = require('express');
+const axios = require('axios');
+const cors = require('cors');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware to enable CORS for all requests
+app.use(cors());
+app.use(express.json());
+
+// Route to proxy requests to the Google Generative AI API
+app.post('/api/generative-ai', async (req, res) => {
+  const { model, message } = req.body;
+  try {
+    // Make a request to the Google Generative AI API
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com`, 
+      {
+        model,
+        message,
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.GENERATIVE_AI_KEY}`,
+        },
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error communicating with Generative AI API:', error);
+    res.status(500).json({ error: 'Failed to communicate with Generative AI API' });
+  }
+});
+
+app.get('/api/maps', async (req, res) => {
+  const { location, radius, keyword } = req.query;
+  try {
+    // Make a request to the Google Maps Places API
+    const response = await axios.get(
+      `https://maps.googleapis.com/maps/api/place/nearbysearch/json`,
+      {
+        params: {
+          location,
+          radius,
+          keyword,
+          key: process.env.GOOGLE_MAP_GEN_KEY,
+        },
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error communicating with Google Maps API:', error);
+    res.status(500).json({ error: 'Failed to communicate with Google Maps API' });
+  }
+});
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Proxy server running on port ${PORT}`);
+});
