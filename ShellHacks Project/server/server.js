@@ -10,6 +10,11 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Root route to confirm the server is running
+app.get('/', (req, res) => {
+  res.send('Server is up and running!');
+});
+
 // Route to proxy requests to the Google Generative AI API
 app.post('/api/generative-ai', async (req, res) => {
   const { model, message } = req.body;
@@ -34,6 +39,7 @@ app.post('/api/generative-ai', async (req, res) => {
   }
 });
 
+// Route to proxy requests to the Google Maps Places API
 app.get('/api/maps', async (req, res) => {
   const { location, radius, keyword } = req.query;
   try {
@@ -59,4 +65,4 @@ app.get('/api/maps', async (req, res) => {
 // Start the server
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Proxy server running on port ${PORT}`);
-  });
+});
