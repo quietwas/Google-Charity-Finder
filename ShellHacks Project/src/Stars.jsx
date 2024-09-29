@@ -10,7 +10,7 @@ function StarBackground({ scene }) {
     const starTexture = textureLoader.load("/Star.jpg"); // Path to the image
 
     // Create a large sphere geometry
-    const starGeometry = new THREE.SphereGeometry(50, 64, 64); // Adjust size and segments
+    const starGeometry = new THREE.SphereGeometry(500, 64, 64); // Adjust size and segments
     const starMaterial = new THREE.MeshBasicMaterial({
       map: starTexture,
       side: THREE.BackSide, // Render the texture on the inside of the sphere
@@ -41,7 +41,7 @@ function StarBackground({ scene }) {
     };
   }, [scene]);
 
-  return null; // This component doesn't render anything directly
+  return null;
 }
 
 export default StarBackground;

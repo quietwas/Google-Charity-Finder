@@ -14,7 +14,7 @@
   height: 100%;
   object-fit: fill;
 }
-/*Someone fix this please */
+/*Fix map repeating*/
 .earth-map {
   width: 518vw;
   height: 518vh;
