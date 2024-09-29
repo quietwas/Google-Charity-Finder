@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-function StarBackground({ scene, camera, renderer }) {
+function StarBackground({ scene }) {
   const domeRef = useRef();
 
   useEffect(() => {
@@ -10,7 +10,7 @@ function StarBackground({ scene, camera, renderer }) {
     const starTexture = textureLoader.load("/Star.jpg"); // Path to the image
 
     // Create a large sphere geometry
-    const starGeometry = new THREE.SphereGeometry(500, 64, 64); // Large enough radius to fill the background
+    const starGeometry = new THREE.SphereGeometry(50, 64, 64); // Adjust size and segments
     const starMaterial = new THREE.MeshBasicMaterial({
       map: starTexture,
       side: THREE.BackSide, // Render the texture on the inside of the sphere
@@ -33,24 +33,13 @@ function StarBackground({ scene, camera, renderer }) {
 
     animate();
 
-    // Handle resizing the window to keep the background filled
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-
-    // Add the resize event listener
-    window.addEventListener("resize", handleResize);
-
-    // Cleanup function to remove the dome and event listener when the component is unmounted
+    // Cleanup function to remove the dome when the component is unmounted
     return () => {
       scene.remove(starDome);
       starDome.geometry.dispose();
       starDome.material.dispose();
-      window.removeEventListener("resize", handleResize);
     };
-  }, [scene, camera, renderer]);
+  }, [scene]);
 
   return null; // This component doesn't render anything directly
 }

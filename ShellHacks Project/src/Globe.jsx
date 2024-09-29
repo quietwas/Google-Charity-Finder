@@ -178,7 +178,6 @@ function Globe() {
             setshowMap((prevState) => !prevState);
           }}
         >
-          {" "}
           {scene && <StarBackground scene={scene} />}
         </div>
       ) : (
