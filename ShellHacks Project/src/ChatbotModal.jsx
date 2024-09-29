@@ -1,90 +1,83 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Set App Element for Modal
 Modal.setAppElement("#root");
 
-function ChatbotModal({ isOpen, onRequestClose, charity }) {
+function ChatbotModal({ isOpen, onRequestClose, charityName }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [chat, setChat] = useState(null);
+  const [chat, setChat] = useState(null); // Store chat instance
 
   useEffect(() => {
-    // Initialize GoogleGenerativeAI when the component mounts
+    // Initialize chat instance when the modal opens and `charityName` is available
     const initChat = async () => {
-      try {
-        const genAI = new GoogleGenerativeAI(process.env.REACT_APP_API_KEY); // Ensure this API key is set correctly
-        const model = await genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      if (isOpen && charityName) {
+        try {
+          const genAI = new GoogleGenerativeAI(
+            import.meta.env.VITE_GOOGLE_GENERATIVE_AI_KEY
+          );
+          const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash",
+          });
 
-        // Log to ensure model is fetched successfully
-        console.log("Model initialized", model);
+          // Start the chat with context
+          const chatInstance = model.startChat({
+            history: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: `You are an assistant knowledgeable about charities. You will provide users with information about whichever charity/donation location
+                    you are given. Do not refer to other sources for more information. If you have absolutely no information on the location,
+                    then you can attempt to assume what they do by their name, while also refering to other sources for more information.
+                    If you believe it is a local business, you can just say that it is likely a local business, and to try to visit their website or other
+                    means of contacting them if interested in donating. Please assume based of the name what they potentially do instead of defaulting to other sources
+                    of information.
+                    Please provide information specifically about the charity named ${charityName}.`,
+                  },
+                ],
+              },
+            ],
+          });
 
-        // Start chat and include charity information in the initial prompt
-        const initialChat = model.startChat({
-          history: [
-            {
-              role: "user",
-              parts: [{ text: `Can you tell me about a charity named ${charity.name}?` }],
-            },
-            {
-              role: "model",
-              parts: [
-                { text: `The nearest charity is ${charity.name}. Here is some information: ${charity.details}` },
-              ],
-            },
-          ],
-        });
+          setChat(chatInstance); // Save chat instance for later use
 
-        setChat(initialChat);
-        setMessages([
-          { sender: "bot", text: `The nearest charity is ${charity.name}. Here is some information: ${charity.details}` },
-        ]);
-
-        console.log("Chat initialized", initialChat);
-      } catch (error) {
-        console.error("Failed to initialize chat:", error);
+          // Display an initial message to the user
+          const initialMessage = `What would you like to know about ${charityName}?`;
+          setMessages([{ sender: "bot", text: initialMessage }]);
+        } catch (error) {
+          console.error("Failed to initialize chat:", error);
+        }
       }
     };
 
     initChat();
-  }, [charity]);
+  }, [isOpen, charityName]);
 
   const handleSendMessage = async () => {
-    if (!input.trim()) return; // Don't send empty messages
-    if (!chat) {
-      console.error("Chat is not initialized");
-      return;
-    }
+    if (!input.trim() || !chat) return; // Ensure input and chat instance are valid
 
     const newMessage = { sender: "user", text: input };
     setMessages((prevMessages) => [...prevMessages, newMessage]);
 
     try {
-      // Send the message to the chat
+      // Send the user's message to the chatbot
       const result = await chat.sendMessage(input);
-      console.log("Message sent, response received", result);
-
       const botMessage = { sender: "bot", text: result.response.text() };
-      setMessages((prevMessages) => [...prevMessages, newMessage, botMessage]);
+
+      // Append bot response to messages
+      setMessages((prevMessages) => [...prevMessages, botMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
-      const botMessage = { sender: "bot", text: "Sorry, something went wrong." };
-      setMessages((prevMessages) => [...prevMessages, newMessage, botMessage]);
     }
 
     setInput(""); // Clear input after sending
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSendMessage();
-    }
-  };
-
   return (
     <Modal isOpen={isOpen} onRequestClose={onRequestClose} className="modal">
-      <h2>Chat about the nearest charity</h2>
+      <h2>{charityName}</h2>
       <div className="chat-window">
         {messages.map((msg, index) => (
           <div key={index} className={`message ${msg.sender}`}>
@@ -96,7 +89,7 @@ function ChatbotModal({ isOpen, onRequestClose, charity }) {
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        onKeyPress={handleKeyPress} // Check for Enter key press
+        onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
       />
       <button onClick={handleSendMessage}>Send</button>
     </Modal>

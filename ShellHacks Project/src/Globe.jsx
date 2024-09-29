@@ -63,7 +63,8 @@ function Globe() {
     const loadGoogleMaps = () => {
       if (!document.querySelector("script[src*='maps.googleapis.com']")) {
         const script = document.createElement("script");
-        script.src = "https://maps.googleapis.com/maps/api/js?key=&libraries=places,geometry&callback=initMap";
+        script.src =
+          "https://maps.googleapis.com/maps/api/js?key=&libraries=places,geometry&callback=initMap";
         script.async = true;
 
         window.initMap = () => {
@@ -78,7 +79,7 @@ function Globe() {
           const findCharities = (location) => {
             const request = {
               location: new google.maps.LatLng(location.lat(), location.lng()),
-              radius: "5000",
+              radius: "20000",
               keyword: "charity donation",
             };
 
@@ -88,10 +89,11 @@ function Globe() {
                 let minDistance = Infinity;
 
                 results.forEach((place) => {
-                  const distance = google.maps.geometry.spherical.computeDistanceBetween(
-                    location,
-                    place.geometry.location
-                  );
+                  const distance =
+                    google.maps.geometry.spherical.computeDistanceBetween(
+                      location,
+                      place.geometry.location
+                    );
 
                   if (distance < minDistance) {
                     minDistance = distance;
@@ -113,6 +115,7 @@ function Globe() {
                     title: closestCharity.name,
                   });
 
+                  // Set the selected charity with all necessary details
                   setSelectedCharity(closestCharity.name);
                   setIsModalOpen(true);
                 }
